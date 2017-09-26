@@ -19,4 +19,11 @@ public class Intervenant implements Serializable{
     private String prenom;
     private String commune;
     private String codepostal;
+
+    public Intervenant(String nom, String prenom, String commune, String codepostal) {
+        this.nom = nom;
+        this.prenom = prenom;
+        this.commune = commune;
+        this.codepostal = codepostal;
+    }
 }

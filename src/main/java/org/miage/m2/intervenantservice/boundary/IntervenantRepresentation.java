@@ -6,17 +6,16 @@ import org.springframework.hateoas.ExposesResourceFor;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.Resource;
 import org.springframework.hateoas.Resources;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
@@ -40,12 +39,44 @@ public class IntervenantRepresentation {
     }
 
     //GET one
-    @GetMapping(value = "{intervenantId}")
-    public ResponseEntity<?> getIntervenant(@PathVariable("intervenantId") String id){
+    @GetMapping(value = "/{intervenantId}")
+    public ResponseEntity<?> getIntervenant(@PathVariable("intervenantId") String id) {
         return Optional.ofNullable(ir.findOne(id))
                 .map(u -> new ResponseEntity<>(intervenantToResource(u, true), HttpStatus.OK))
                 .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
 
+    }
+
+    //POST
+    @PostMapping
+    public ResponseEntity<?> saveIntervenant(@RequestBody Intervenant intervenant) {
+        intervenant.setId(UUID.randomUUID().toString());
+        Intervenant saved = ir.save(intervenant);
+        HttpHeaders responseHeaders = new HttpHeaders();
+        responseHeaders.setLocation(linkTo(IntervenantRepresentation.class).slash(saved.getId()).toUri());
+        return new ResponseEntity<>(null, responseHeaders, HttpStatus.CREATED);
+    }
+
+    //PUT
+    @PutMapping(value = "/{intervenantId}")
+    public ResponseEntity<?> updateIntervenant(@RequestBody Intervenant intervenant, @PathVariable("intervenantId") String intervenantId) {
+        Optional<Intervenant> body = Optional.ofNullable(intervenant);
+        if (!body.isPresent()) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+        if (!ir.exists(intervenantId)) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        intervenant.setId(intervenantId);
+        Intervenant result = ir.save(intervenant);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    //DELETE
+    @DeleteMapping(value = "/{intervenantId}")
+    public ResponseEntity<?> deleteIntervenant(@PathVariable("intervenantId") String intervenantId) {
+        ir.delete(intervenantId);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     private Resources<Resource<Intervenant>> intervenantToRessource(Iterable<Intervenant> intervenants) {
